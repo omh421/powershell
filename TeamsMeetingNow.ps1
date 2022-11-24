@@ -2,6 +2,8 @@
 
 $buffer=@{"before"=0; "after"=5}  # Buffer either side of /now/ to look for events. Note that this works on intersection of the search period and any time in the meeting.
 
+#$buffer=@{"before"=60; "after"=60}  # Larger buffer for testing!
+
 
 <# Note time zones
     Get-MgUserCalendar does searches based on UTC and returns data with UTC
@@ -14,7 +16,7 @@ $buffer=@{"before"=0; "after"=5}  # Buffer either side of /now/ to look for even
 
     # Get username
     #   Considered using $env:username or (whoami /upn). But this method gets the Teams account specifically
-    Get-ItemPropertyValue HKCU:\SOFTWARE\Microsoft\Office\Teams -name HomeUserUPN
+    $myuserid=Get-ItemPropertyValue HKCU:\SOFTWARE\Microsoft\Office\Teams -name HomeUserUPN
 
     echo "Checking calendar for user: $myuserid"
 
@@ -51,7 +53,9 @@ if ($events.count -eq 0) {
 
 } elseif ($events.count -gt 1) {
     "Multiple events found"
+    #$events| select Subject,@{N="Start";E={$_.Start.DateTime}},@{N="End";E={$_.End.DateTime}} | ft -AutoSize
     $events| select Subject,Start_l,End_l | ft -AutoSize
+
 
     # Pick the nearest meeting 
     $nearestmeeting=($events | select @{N="Diff";E={[math]::Abs(($now.ToUniversalTime()-(get-date $_.Start.DateTime)).totalseconds)}},* | sort Diff)[0]
